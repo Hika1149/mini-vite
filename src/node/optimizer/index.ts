@@ -2,6 +2,8 @@ import path from "path";
 import esbuild from "esbuild";
 import { scanDepsPlugin } from "./scanPlugin";
 import { green } from "picocolors";
+import { PRE_BUNDLE_DIR } from "../constants";
+import { preBundlePlugin } from "./preBundlePlugin";
 
 export async function optimize(root: string) {
   /**
@@ -13,9 +15,9 @@ export async function optimize(root: string) {
    * */
 
   //1.
-  const entry = path.resolve(root, "src/main.tsx");
+  const entry = path.resolve(root, "src/main");
 
-  //2.
+  // //2.
   const deps = new Set<string>();
   await esbuild.build({
     entryPoints: [entry],
@@ -31,4 +33,15 @@ export async function optimize(root: string) {
   );
 
   //3.
+  const result = await esbuild.build({
+    entryPoints: [...deps],
+    write: true,
+    bundle: true,
+    format: "esm",
+    splitting: true,
+    outdir: path.resolve(root, PRE_BUNDLE_DIR),
+    plugins: [preBundlePlugin(deps)],
+    // plugins: [preBundlePlugin(deps)],
+  });
+  console.log(`${green(`build result: ${result}`)}`);
 }

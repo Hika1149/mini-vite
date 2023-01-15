@@ -18,6 +18,7 @@ export const scanDepsPlugin = (deps: Set<string>): Plugin => {
         const { path } = args;
         /** gather dep */
         deps.add(path);
+        // console.log(`[scan-deps]: `, { args });
 
         return {
           path,

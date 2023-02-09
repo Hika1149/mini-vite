@@ -3,8 +3,13 @@ import { blue, green } from "picocolors";
 import { optimize } from "../optimizer";
 import { resolvePlugins } from "../plugins";
 import { createPluginContainer } from "../pluginContainer";
+import { indexHtmlMiddleware } from "./middlewares/indexHtml";
+import { Plugin } from "../plugin";
 
-export interface ServerContext {}
+export interface ServerContext {
+  root: string;
+  plugins: Plugin[];
+}
 
 export async function startDevServer() {
   const app = connect();
@@ -26,6 +31,8 @@ export async function startDevServer() {
       await plugin.configServer(serverContext);
     }
   }
+  /** middleware: handle '/' req */
+  app.use(indexHtmlMiddleware(serverContext));
 
   app.listen(3000, async () => {
     await optimize(root);

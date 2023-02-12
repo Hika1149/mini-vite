@@ -23,11 +23,11 @@ export const createPluginContainer = (plugins: Plugin[]): PluginContainer => {
     async resolve(id: string, importer?: string) {
       let out = await pluginContainer.resolveId(id, importer);
       //@ts-ignore
-      // if (typeof out === "string") {
-      //   out = {
-      //     id: out,
-      //   };
-      // }
+      if (typeof out === "string") {
+        out = {
+          id: out,
+        };
+      }
       return out as ResolvedId | null;
     }
   }

@@ -27,7 +27,7 @@ export async function startDevServer() {
     plugins,
     pluginContainer,
   };
-
+  /** hook: configServer */
   for (const plugin of plugins) {
     if (plugin.configServer) {
       await plugin.configServer(serverContext);

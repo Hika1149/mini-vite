@@ -6,6 +6,7 @@ import { createPluginContainer, PluginContainer } from "../pluginContainer";
 import { indexHtmlMiddleware } from "./middlewares/indexHtml";
 import { Plugin } from "../plugin";
 import { transformMiddleware } from "./middlewares/transformMiddleware";
+import { staticMiddleware } from "./middlewares/static";
 
 export interface ServerContext {
   root: string;
@@ -37,6 +38,9 @@ export async function startDevServer() {
   app.use(indexHtmlMiddleware(serverContext));
   /** middleware: handle (js) req */
   app.use(transformMiddleware(serverContext));
+
+  /** middleware: handle static req*/
+  app.use(staticMiddleware(root));
 
   app.listen(3000, async () => {
     await optimize(root);

@@ -1,6 +1,6 @@
 import { NextHandleFunction } from "connect";
 import { ServerContext } from "../index";
-import { isCSSRequest, isJSRequest } from "../../utils";
+import { isCSSRequest, isImportRequest, isJSRequest } from "../../utils";
 import createDebug from "debug";
 
 const debug = createDebug("dev");
@@ -29,7 +29,7 @@ const transformRequest = async (url: string, serverContext: ServerContext) => {
 };
 
 /**
- *  handle js/css req
+ *  handle js/css/svg req
  *  - invoke pluginContainer (resolve,load, transform..)
  * */
 export const transformMiddleware = (
@@ -41,7 +41,7 @@ export const transformMiddleware = (
     }
     const url = req.url;
     debug("transformMiddleware: %s", url);
-    if (isJSRequest(url) || isCSSRequest(url)) {
+    if (isJSRequest(url) || isCSSRequest(url) || isImportRequest(url)) {
       let result = await transformRequest(req.url, serverContext);
       if (!result) {
         return next();

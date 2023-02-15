@@ -24,6 +24,16 @@ export const importAnalysisPlugin = (): Plugin => {
         if (!modSource) {
           return null;
         }
+
+        /** mark static import
+         * - append ?import
+         * */
+        if (modSource.endsWith(".svg")) {
+          const resolvedUrl = path.join(path.dirname(id), modSource);
+          ms.overwrite(modStart, modEnd, `${resolvedUrl}?import`);
+          continue;
+        }
+
         /** overwrite importPath of deps */
         if (BARE_IMPORT_RE.test(modSource)) {
           const bundlePath = path.join("/", PRE_BUNDLE_DIR, `${modSource}.js`);

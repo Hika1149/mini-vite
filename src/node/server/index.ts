@@ -7,26 +7,31 @@ import { indexHtmlMiddleware } from "./middlewares/indexHtml";
 import { Plugin } from "../plugin";
 import { transformMiddleware } from "./middlewares/transformMiddleware";
 import { staticMiddleware } from "./middlewares/static";
+import { ModuleGraph } from "../moduleGraph";
 
 export interface ServerContext {
   root: string;
   plugins: Plugin[];
   pluginContainer: PluginContainer;
+  moduleGraph: ModuleGraph;
 }
 
 export async function startDevServer() {
+  /** resolve plugins & create pluginContainer */
+  const plugins = resolvePlugins();
+  const pluginContainer = createPluginContainer(plugins);
+  const moduleGraph = new ModuleGraph((url) => pluginContainer.resolveId(url));
+
   const app = connect();
   const root = process.cwd();
   const startTime = Date.now();
 
-  /** resolve plugins & create pluginContainer */
-  const plugins = resolvePlugins();
-  const pluginContainer = createPluginContainer(plugins);
   const serverContext = {
     root,
     app,
     plugins,
     pluginContainer,
+    moduleGraph,
   };
   /** hook: configServer */
   for (const plugin of plugins) {

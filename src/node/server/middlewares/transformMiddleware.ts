@@ -6,11 +6,17 @@ import createDebug from "debug";
 const debug = createDebug("dev");
 
 const transformRequest = async (url: string, serverContext: ServerContext) => {
-  const { pluginContainer } = serverContext;
+  const { pluginContainer, moduleGraph } = serverContext;
 
   const resolvedResult = await pluginContainer.resolveId(url);
 
   const resolvedId = resolvedResult?.id;
+
+  let mod = await moduleGraph.getModuleByUrl(url);
+  // transform from cache
+  if (mod && mod.transformResult) {
+    return mod.transformResult;
+  }
 
   let transformResult;
   if (resolvedId) {
@@ -21,9 +27,17 @@ const transformRequest = async (url: string, serverContext: ServerContext) => {
       code = code.code;
     }
 
+    /** register to moduleGroup */
+    mod = await moduleGraph.ensureEntryFromUrl(url);
+
     if (code) {
       transformResult = await pluginContainer.transform(code, resolvedId);
     }
+  }
+
+  //
+  if (mod) {
+    mod.transformResult = transformResult;
   }
   return transformResult;
 };

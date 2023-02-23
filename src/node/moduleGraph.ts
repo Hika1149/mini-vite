@@ -47,7 +47,6 @@ export class ModuleGraph {
   async ensureEntryFromUrl(rawUrl: string) {
     const { url, resolvedId } = await this._resolve(rawUrl);
     if (this.urlToModuleMap.get(url)) {
-      // return this.urlToModuleMap.get(url) as ModuleNode;
       return this.urlToModuleMap.get(url) as ModuleNode;
     }
     const mod = new ModuleNode(url);
@@ -65,7 +64,7 @@ export class ModuleGraph {
     const prevImports = mod.importedModules;
 
     for (const curImports of importedModules) {
-      /** curImports string -> */
+      /** curImports string -> req short path to root */
       const dep =
         typeof curImports === "string"
           ? await this.ensureEntryFromUrl(cleanUrl(curImports))
@@ -74,16 +73,16 @@ export class ModuleGraph {
       /** */
       if (dep) {
         mod.importedModules.add(dep);
-        dep.importers.add(mod);
+        dep.importers?.add(mod);
       }
     }
 
     //
     for (const prevImport of prevImports) {
       if (!importedModules.has(prevImport.url)) {
-        prevImport.importers.delete(mod);
+        prevImport.importers?.delete(mod);
         //
-        mod.importedModules.delete(prevImport);
+        mod.importedModules?.delete(prevImport);
       }
     }
   }

@@ -14,6 +14,7 @@ export const resolvePlugin = (): Plugin => {
     configServer: (s) => {
       serverContext = s;
     },
+    /** -> resolve to absolute path so that load-plugin can read the code */
     resolveId: async (id: string, importer?: string) => {
       /** */
       id = removeImportQuery(cleanUrl(id));

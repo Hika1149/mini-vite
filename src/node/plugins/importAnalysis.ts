@@ -1,14 +1,18 @@
 import path from "path";
 import { init, parse } from "es-module-lexer";
 import { Plugin } from "../plugin";
-import { isJSRequest } from "../utils";
+import { cleanUrl, getShortName, isJSRequest } from "../utils";
 import { BARE_IMPORT_RE, PRE_BUNDLE_DIR } from "../constants";
 import MagicString from "magic-string";
+import { ServerContext } from "../server";
 
 export const importAnalysisPlugin = (): Plugin => {
+  let serverContext: ServerContext;
   return {
     name: "m-vite:importAnalysis",
-
+    configServer(s) {
+      serverContext = s;
+    },
     async transform(code, id) {
       if (!isJSRequest(id)) {
         return null;
@@ -18,6 +22,31 @@ export const importAnalysisPlugin = (): Plugin => {
 
       const [imports] = parse(code);
       const ms = new MagicString(code);
+
+      /** resolve to shortPath */
+      const resolve = async (id: string, importer?: string) => {
+        const resolved = await serverContext.pluginContainer.resolveId(
+          id,
+          importer
+        );
+
+        if (!resolved) {
+          return;
+        }
+        const cleanId = cleanUrl(resolved.id);
+        // const mod = moduleGraph.getModuleById(cleanId);
+        //
+        const resolvedId = `/${getShortName(cleanId, serverContext.root)}`;
+
+        return resolvedId;
+      };
+
+      /** update module module */
+      const { moduleGraph } = serverContext;
+      const curMod = await moduleGraph.getModuleById(id)!;
+      const importedModules = new Set<string>();
+
+      //
       for (const importInfo of imports) {
         const { s: modStart, e: modEnd, n: modSource } = importInfo;
 
@@ -38,6 +67,8 @@ export const importAnalysisPlugin = (): Plugin => {
         if (BARE_IMPORT_RE.test(modSource)) {
           const bundlePath = path.join("/", PRE_BUNDLE_DIR, `${modSource}.js`);
           ms.overwrite(modStart, modEnd, bundlePath);
+          //
+          importedModules.add(bundlePath);
         } else if (modSource.startsWith(".") || modSource.startsWith("/")) {
           /** should overwrite relative/absolute import path?
            *  yes
@@ -45,12 +76,20 @@ export const importAnalysisPlugin = (): Plugin => {
            *  - alias plugin...
            * */
           //@ts-ignore
-          const resolvedId = await this.resolve(modSource, id);
+          // const resolvedId = await this.resolve(modSource, id);
+
+          const resolvedId = await resolve(modSource, id);
+
           if (resolvedId) {
-            ms.overwrite(modStart, modEnd, resolvedId.id);
+            // ms.overwrite(modStart, modEnd, resolvedId.id);
+            ms.overwrite(modStart, modEnd, resolvedId);
+            //
+            importedModules.add(resolvedId);
           }
         }
       }
+
+      await moduleGraph.updateModuleInfo(curMod, importedModules);
 
       return { code: ms.toString(), map: ms.generateMap() };
     },

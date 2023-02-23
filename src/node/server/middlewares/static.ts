@@ -14,6 +14,9 @@ export const staticMiddleware = (root: string): NextHandleFunction => {
       return;
     }
 
+    // console.log("in sirv middleware: ", req.url);
+
     servFromRoot(req, res, next);
+    // next();
   };
 };

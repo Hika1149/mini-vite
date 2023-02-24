@@ -1,3 +1,4 @@
+import chokidar, { FSWatcher } from "chokidar";
 import connect from "connect";
 import { blue, green } from "picocolors";
 import { optimize } from "../optimizer";
@@ -8,22 +9,36 @@ import { Plugin } from "../plugin";
 import { transformMiddleware } from "./middlewares/transformMiddleware";
 import { staticMiddleware } from "./middlewares/static";
 import { ModuleGraph } from "../moduleGraph";
+import { createWebSocketServer } from "../ws";
+import { bindingHMREvents } from "../hmr";
 
 export interface ServerContext {
   root: string;
   plugins: Plugin[];
   pluginContainer: PluginContainer;
   moduleGraph: ModuleGraph;
+  watcher: FSWatcher;
+  ws: { send: (data: any) => void; close: () => void };
 }
 
 export async function startDevServer() {
+  const root = process.cwd();
+  /** file watcher */
+  const watcher = chokidar.watch(root, {
+    ignored: ["**/node_modules/**", "**/.git/**"],
+    ignoreInitial: true,
+  });
+
+  /** ws */
+  const ws = createWebSocketServer();
+
   /** resolve plugins & create pluginContainer */
   const plugins = resolvePlugins();
   const pluginContainer = createPluginContainer(plugins);
   const moduleGraph = new ModuleGraph((url) => pluginContainer.resolveId(url));
 
   const app = connect();
-  const root = process.cwd();
+
   const startTime = Date.now();
 
   const serverContext = {
@@ -32,7 +47,14 @@ export async function startDevServer() {
     plugins,
     pluginContainer,
     moduleGraph,
+    //
+    watcher,
+    ws,
   };
+
+  /** bind hmr */
+  bindingHMREvents(serverContext);
+
   /** hook: configServer */
   for (const plugin of plugins) {
     if (plugin.configServer) {

@@ -6,7 +6,8 @@ export function bindingHMREvents(serverContext: ServerContext) {
   const { watcher, moduleGraph, ws, root } = serverContext;
 
   watcher.on("change", async (file) => {
-    console.log(`${blue("[hmr]")} ${green(file)} changed`);
+    const shortPath = "/" + getShortName(file, root);
+    console.log(`${blue("[hmr]")} ${green(shortPath)} changed`);
     // clear transform cache
     await moduleGraph.invalidateModule(file);
 
@@ -18,7 +19,7 @@ export function bindingHMREvents(serverContext: ServerContext) {
         {
           type: "js-update",
           timestamp: Date.now(),
-          path: "/" + getShortName(file, root),
+          path: shortPath,
           acceptedPath: "/" + getShortName(file, root),
         },
       ],

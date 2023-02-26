@@ -10,12 +10,13 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img className="App-logo" src={logo} alt="" />
-        <p>Hello Vite + React</p>
+        <p>Hello Vite + React12</p>
         <p>
           <button type="button" onClick={() => setCount((count) => count + 1)}>
             count is: {count}
           </button>
         </p>
+        +
         <p>
           Edit <code>App</code> and save e test.
         </p>

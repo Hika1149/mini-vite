@@ -1,5 +1,12 @@
-import { HASH_RE, JS_TYPES_RE, QUERY_RE } from "./constants";
+import {
+  CLIENT_PUBLIC_PATH,
+  HASH_RE,
+  JS_TYPES_RE,
+  QUERY_RE,
+} from "./constants";
 import path from "node:path";
+
+const INTERNAL_LIST = [CLIENT_PUBLIC_PATH];
 
 export const isJSRequest = (id: string): boolean => {
   id = cleanUrl(id);
@@ -23,6 +30,10 @@ export const isCSSRequest = (id: string): boolean => {
 export const isImportRequest = (id: string): boolean => {
   // id = cleanUrl(id);
   return id.endsWith("?import");
+};
+
+export const isInternalRequest = (url: string) => {
+  return INTERNAL_LIST.includes(url);
 };
 
 export const getShortName = (url: string, root: string) => {

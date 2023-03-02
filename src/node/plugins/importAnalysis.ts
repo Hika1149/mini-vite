@@ -1,8 +1,17 @@
 import path from "path";
 import { init, parse } from "es-module-lexer";
 import { Plugin } from "../plugin";
-import { cleanUrl, getShortName, isJSRequest } from "../utils";
-import { BARE_IMPORT_RE, PRE_BUNDLE_DIR } from "../constants";
+import {
+  cleanUrl,
+  getShortName,
+  isInternalRequest,
+  isJSRequest,
+} from "../utils";
+import {
+  BARE_IMPORT_RE,
+  CLIENT_PUBLIC_PATH,
+  PRE_BUNDLE_DIR,
+} from "../constants";
 import MagicString from "magic-string";
 import { ServerContext } from "../server";
 
@@ -14,7 +23,7 @@ export const importAnalysisPlugin = (): Plugin => {
       serverContext = s;
     },
     async transform(code, id) {
-      if (!isJSRequest(id)) {
+      if (!isJSRequest(id) || isInternalRequest(id)) {
         return null;
       }
 
@@ -50,8 +59,8 @@ export const importAnalysisPlugin = (): Plugin => {
       for (const importInfo of imports) {
         const { s: modStart, e: modEnd, n: modSource } = importInfo;
 
-        if (!modSource) {
-          return null;
+        if (!modSource || isInternalRequest(modSource)) {
+          continue;
         }
 
         /** mark static import
@@ -87,6 +96,16 @@ export const importAnalysisPlugin = (): Plugin => {
             importedModules.add(resolvedId);
           }
         }
+      }
+
+      /** inject hmr var */
+      if (!id.includes("node_modules")) {
+        ms.prepend(
+          `import {createHotContext as __vite__createHotContext} from "${CLIENT_PUBLIC_PATH}";` +
+            `import.meta.hot = __vite__createHotContext(${JSON.stringify(
+              cleanUrl(curMod.url)
+            )});`
+        );
       }
 
       await moduleGraph.updateModuleInfo(curMod, importedModules);

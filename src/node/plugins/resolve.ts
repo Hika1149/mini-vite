@@ -4,7 +4,7 @@ import path from "path";
 import { pathExists } from "fs-extra";
 import resolve from "resolve";
 import { DEFAULT_EXTENSIONS } from "../constants";
-import { cleanUrl, removeImportQuery } from "../utils";
+import { cleanUrl, isInternalRequest, removeImportQuery } from "../utils";
 
 export const resolvePlugin = (): Plugin => {
   let serverContext: ServerContext;
@@ -18,6 +18,11 @@ export const resolvePlugin = (): Plugin => {
     resolveId: async (id: string, importer?: string) => {
       /** */
       id = removeImportQuery(cleanUrl(id));
+
+      //
+      if (isInternalRequest(id)) {
+        return null;
+      }
 
       if (path.isAbsolute(id)) {
         /** */

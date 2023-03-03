@@ -37,7 +37,7 @@ export const isInternalRequest = (url: string) => {
 };
 
 export const getShortName = (url: string, root: string) => {
-  return url.startsWith(root) ? path.relative(root, url) : url;
+  return url.startsWith(root) ? path.posix.relative(root, url) : url;
 };
 
 export const cleanUrl = (url: string): string => {

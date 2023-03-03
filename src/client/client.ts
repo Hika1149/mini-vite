@@ -125,3 +125,18 @@ async function fetchUpdate({ path, timestamp }: Update) {
     console.log(`[vite] hot updated: ${path}`);
   };
 }
+
+export const sheetMap = new Map();
+
+export const updateStyle = (id: string, content: string) => {
+  let style = sheetMap.get(id);
+  if (!style) {
+    style = document.createElement("style");
+    style.setAttribute("type", "text/css");
+    style.innerHTML = content;
+    document.head.appendChild(style);
+  } else {
+    style.innerHTML = content;
+  }
+  sheetMap.set(id, style);
+};
